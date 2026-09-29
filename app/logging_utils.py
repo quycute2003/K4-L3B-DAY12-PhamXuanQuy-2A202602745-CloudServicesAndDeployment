@@ -34,4 +34,18 @@ def log_event(event: str, level: str = "info", **fields) -> str:
         >>> log_event("ask_completed", user_id="sv01", cost_usd=0.0001)
         '{"event": "ask_completed", "level": "info", "timestamp": "...", ...}'
     """
-    raise NotImplementedError("TODO (CP1): cài đặt log_event")
+    payload = {
+        "event": event,
+        "level": level.lower(),
+        "timestamp": utc_now_iso(),
+        **fields,
+    }
+    message = json.dumps(payload, ensure_ascii=False)
+    try:
+        print(message, file=sys.stdout)
+    except UnicodeEncodeError:
+        # Một số console Windows vẫn dùng CP1252. Ghi bytes UTF-8 trực tiếp
+        # để nội dung Unicode không bị thay thế hoặc làm hỏng cả event log.
+        sys.stdout.buffer.write(f"{message}\n".encode("utf-8"))
+        sys.stdout.buffer.flush()
+    return message
